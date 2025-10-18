@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardianas del Planeta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        #game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .characters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .character {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 3px solid transparent;
+        }
+        
+        .character:hover {
+            transform: scale(1.1);
+        }
+        
+        .character.active {
+            border-color: gold;
+            box-shadow: 0 0 15px gold;
+        }
+        
+        #game-area {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .action-item {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        .action-item:hover {
+            transform: scale(1.2);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .message {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            margin: 15px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tips {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        
+        .tips h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .tip-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .tip {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .tip i {
+            font-size: 1.2rem;
+            color: #4caf50;
+        }
+        
+        button {
+            background: linear-gradient(to right, #4caf50, #2e7d32);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        }
+        
+        #win-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            display: none;
+        }
+        
+        #win-screen h2 {
+            font-size: 3rem;
+            color: #4caf50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .character-info {
+            display: none;
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            #game-area {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>Guardianas del Planeta</h1>
+            <p>¡Ayuda a las cinco guardianas a proteger el agua y la energía!</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div>Agua</div>
+                <div class="stat-value" id="water-level">100%</div>
+            </div>
+            <div class="stat-box">
+                <div>Energía</div>
+                <div class="stat-value" id="energy-level">100%</div>
+            </div>
+            <div class="stat-box">
+                <div>Puntos</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+        </div>
+        
+        <div class="characters">
+            <div class="character" data-id="1" style="background: linear-gradient(45deg, #ff9a9e, #fad0c4);">
+                <span>💧</span>
+            </div>
+            <div class="character" data-id="2" style="background: linear-gradient(45deg, #a1c4fd, #c2e9fb);">
+                <span>⚡</span>
+            </div>
+            <div class="character" data-id="3" style="background: linear-gradient(45deg, #ffecd2, #fcb69f);">
+                <span>🌱</span>
+            </div>
+            <div class="character" data-id="4" style="background: linear-gradient(45deg, #84fab0, #8fd3f4);">
+                <span>🌍</span>
+            </div>
+            <div class="character" data-id="5" style="background: linear-gradient(45deg, #d4fc79, #96e6a1);">
+                <span>♻️</span>
+            </div>
+        </div>
+        
+        <div class="character-info" id="character-info">
+            <strong id="character-name">María - Guardiana del Agua</strong><br>
+            <span id="character-desc">Especialista en conservación hídrica y gestión de recursos acuáticos.</span>
+        </div>
+        
+        <div class="message" id="message">
+            Selecciona una guardiana y haz clic en las acciones positivas para el planeta
+        </div>
+        
+        <div id="game-area">
+            <!-- Los elementos de acción se generarán aquí -->
+        </div>
+        
+        <div style="text-align: center;">
+            <button id="reset-btn">Reiniciar Juego</button>
+        </div>
+        
+        <div class="tips">
+            <h2>Consejos para Cuidar Nuestro Planeta</h2>
+            <div class="tip-list">
+                <div class="tip">
+                    <span>💧</span>
+                    <span>Cierra el grifo mientras te cepillas los dientes para ahorrar hasta 12 litros de agua por minuto.</span>
+                </div>
+                <div class="tip">
+                    <span>💡</span>
+                    <span>Reemplaza tus bombillas por LED: consumen hasta un 80% menos energía y duran 25 veces más.</span>
+                </div>
+                <div class="tip">
+                    <span>🚿</span>
+                    <span>Reduce tu ducha a 5 minutos: ¡puedes ahorrar hasta 100 litros de agua por día!</span>
+                </div>
+                <div class="tip">
+                    <span>🔌</span>
+                    <span>Desconecta los aparatos electrónicos cuando no los uses: el "modo stand-by" consume energía innecesaria.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="win-screen">
+        <h2>¡Felicidades! 🌍✨</h2>
+        <p>Has ayudado a las Guardianas a proteger nuestro planeta.</p>
+        <p>Tu puntaje final: <span id="final-score">0</span></p>
+        <button id="play-again">Jugar de Nuevo</button>
+    </div>
+
+    <script>
+        // Estado del juego
+        const gameState = {
+            water: 100,
+            energy: 100,
+            score: 0,
+            activeCharacter: 1,
+            gameActive: true
+        };
+        
+        // Información de las guardianas
+        const guardians = {
+            1: { name: "María", desc: "Guardiana del Agua - Especialista en conservación hídrica", emoji: "💧" },
+            2: { name: "Lucía", desc: "Guardiana de la Energía - Experta en energías renovables", emoji: "⚡" },
+            3: { name: "Sofía", desc: "Guardiana de la Naturaleza - Defensora de los ecosistemas", emoji: "🌱" },
+            4: { name: "Valentina", desc: "Guardiana de la Tierra - Protectora de suelos y biodiversidad", emoji: "🌍" },
+            5: { name: "Isabella", desc: "Guardiana del Reciclaje - Promotora de economía circular", emoji: "♻️" }
+        };
+        
+        // Acciones positivas y negativas
+        const actions = [
+            // Positivas
+            { type: 'positive', resource: 'water', value: 5, emoji: '🚿', message: '¡Ducha corta! Ahorras agua.' },
+            { type: 'positive', resource: 'water', value: 8, emoji: '🚰', message: '¡Reparaste una fuga! Salvaste litros de agua.' },
+            { type: 'positive', resource: 'energy', value: 6, emoji: '💡', message: '¡Cambiaste a bombillas LED! Ahorras energía.' },
+            { type: 'positive', resource: 'energy', value: 10, emoji: '☀️', message: '¡Instalaste paneles solares! Energía limpia.' },
+            { type: 'positive', resource: 'water', value: 7, emoji: '🌱', message: '¡Riegas con agua de lluvia! Conservas el recurso.' },
+            { type: 'positive', resource: 'energy', value: 5, emoji: '🚲', message: '¡Usas bicicleta! Reduces tu huella de carbono.' },
+            
+            // Negativas
+            { type: 'negative', resource: 'water', value: -10, emoji: '🚰', message: '¡Fuga de agua! Necesitas repararla.' },
+            { type: 'negative', resource: 'water', value: -8, emoji: '🚿', message: '¡Ducha muy larga! Desperdicias agua.' },
+            { type: 'negative', resource: 'energy', value: -12, emoji: '💡', message: '¡Luces encendidas todo el día! Gasto innecesario.' },
+            { type: 'negative', resource: 'energy', value: -15, emoji: '🚗', message: '¡Uso excesivo de auto! Contaminas el aire.' },
+            { type: 'negative', resource: 'water', value: -7, emoji: '🚽', message: '¡Descarga innecesaria! Malgastas agua potable.' },
+            { type: 'negative', resource: 'energy', value: -9, emoji: '🔌', message: '¡Electrodomésticos en stand-by! Consumen energía.' }
+        ];
+        
+        // Elementos del DOM
+        const waterLevel = document.getElementById('water-level');
+        const energyLevel = document.getElementById('energy-level');
+        const scoreElement = document.getElementById('score');
+        const messageElement = document.getElementById('message');
+        const gameArea = document.getElementById('game-area');
+        const characterInfo = document.getElementById('character-info');
+        const characterName = document.getElementById('character-name');
+        const characterDesc = document.getElementById('character-desc');
+        const winScreen = document.getElementById('win-screen');
+        const finalScore = document.getElementById('final-score');
+        const resetBtn = document.getElementById('reset-btn');
+        const playAgainBtn = document.getElementById('play-again');
+        
+        // Inicializar personajes
+        document.querySelectorAll('.character').forEach(char => {
+            char.addEventListener('click', () => {
+                if (!gameState.gameActive) return;
+                
+                document.querySelectorAll('.character').forEach(c => c.classList.remove('active'));
+                char.classList.add('active');
+                gameState.activeCharacter = parseInt(char.dataset.id);
+                
+                // Actualizar info del personaje
+                const guardian = guardians[gameState.activeCharacter];
+                characterName.textContent = `${guardian.name} - ${guardian.desc}`;
+                characterInfo.style.display = 'block';
+                
+                messageElement.textContent = `Seleccionaste a ${guardian.name}. ¡Haz clic en acciones positivas para ayudar!`;
+            });
+        });
+        
+        // Seleccionar primera guardiana por defecto
+        document.querySelector('.character').click();
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            waterLevel.textContent = `${Math.max(0, Math.min(100, Math.round(gameState.water)))}%`;
+            energyLevel.textContent = `${Math.max(0, Math.min(100, Math.round(gameState.energy)))}%`;
+            scoreElement.textContent = gameState.score;
+            
+            // Verificar condiciones de victoria/derrota
+            if (gameState.water <= 0 || gameState.energy <= 0) {
+                endGame(false);
+            } else if (gameState.score >= 100) {
+                endGame(true);
+            }
+        }
+        
+        // Crear un elemento de acción
+        function createAction() {
+            if (!gameState.gameActive) return;
+            
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            const element = document.createElement('div');
+            element.className = 'action-item';
+            element.innerHTML = action.emoji;
+            element.dataset.type = action.type;
+            element.dataset.resource = action.resource;
+            element.dataset.value = action.value;
+            
+            // Posición aleatoria
+            const x = Math.random() * (gameArea.offsetWidth - 60);
+            const y = Math.random() * (gameArea.offsetHeight - 60);
+            element.style.left = `${x}px`;
+            element.style.top = `${y}px`;
+            
+            // Rotación aleatoria
+            const rotation = Math.random() * 360;
+            element.style.transform = `rotate(${rotation}deg)`;
+            
+            element.addEventListener('click', () => {
+                if (!gameState.gameActive) return;
+                
+                // Eliminar el elemento
+                element.remove();
+                
+                // Aplicar efecto
+                if (action.type === 'positive') {
+                    if (action.resource === 'water') {
+                        gameState.water = Math.min(100, gameState.water + action.value);
+                    } else {
+                        gameState.energy = Math.min(100, gameState.energy + action.value);
+                    }
+                    gameState.score += 5;
+                    messageElement.textContent = action.message;
+                } else {
+                    if (action.resource === 'water') {
+                        gameState.water = Math.max(0, gameState.water + action.value);
+                    } else {
+                        gameState.energy = Math.max(0, gameState.energy + action.value);
+                    }
+                    messageElement.textContent = action.message;
+                }
+                
+                updateStats();
+            });
+            
+            gameArea.appendChild(element);
+            
+            // Eliminar después de 5 segundos
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.remove();
+                }
+            }, 5000);
+        }
+        
+        // Generar acciones periódicamente
+        setInterval(createAction, 2000);
+        
+        // Terminar el juego
+        function endGame(isWin) {
+            gameState.gameActive = false;
+            
+            if (isWin) {
+                winScreen.style.display = 'flex';
+                finalScore.textContent = gameState.score;
+            } else {
+                messageElement.textContent = '¡Oh no! Has agotado los recursos. ¡Inténtalo de nuevo!';
+                messageElement.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Reiniciar juego
+        function resetGame() {
+            gameState.water = 100;
+            gameState.energy = 100;
+            gameState.score = 0;
+            gameState.gameActive = true;
+            
+            // Limpiar área de juego
+            gameArea.innerHTML = '';
+            
+            // Restablecer estilos
+            messageElement.textContent = 'Selecciona una guardiana y haz clic en las acciones positivas para el planeta';
+            messageElement.style.color = 'white';
+            winScreen.style.display = 'none';
+            
+            updateStats();
+        }
+        
+        resetBtn.addEventListener('click', resetGame);
+        playAgainBtn.addEventListener('click', () => {
+            winScreen.style.display = 'none';
+            resetGame();
+        });
+        
+        // Inicializar
+        updateStats();
+    </script>
+</body>
+</html>
